@@ -1,0 +1,32 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "server",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/Users/altynbek/.local/node-v24/bin:$PATH\" && npm run dev --workspace server"
+      ],
+      "port": 4000
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/Users/altynbek/.local/node-v24/bin:$PATH\" && npm run dev --workspace web"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/Users/altynbek/.local/node-v24/bin:$PATH\" && npm run dev --workspace admin"
+      ],
+      "port": 5174
+    }
+  ]
+}

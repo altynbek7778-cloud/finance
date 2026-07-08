@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  MEMBER
+}
+
+enum TxType {
+  EXPENSE
+  INCOME
+}
+
+enum TxSource {
+  MANUAL
+  AI
+}
+
+enum ActorType {
+  USER
+  ADMIN
+  SYSTEM
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  avatarColor  String?
+  isDisabled   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships       WorkspaceMember[]
+  refreshTokens     RefreshToken[]
+  pushSubscriptions PushSubscription[]
+  createdWorkspaces Workspace[]        @relation("WorkspaceCreator")
+  createdInvites    Invite[]           @relation("InviteCreator")
+  usedInvites       Invite[]           @relation("InviteUser")
+  transactions      Transaction[]
+  eventLogs         EventLog[]
+}
+
+model RefreshToken {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash     String    @unique
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  replacedById  String?
+  createdAt     DateTime  @default(now())
+  userAgent     String?
+  ipAddress     String?
+
+  @@index([userId])
+}
+
+model Workspace {
+  id            String   @id @default(cuid())
+  name          String
+  createdAt     DateTime @default(now())
+  createdById   String
+  createdBy     User     @relation("WorkspaceCreator", fields: [createdById], references: [id])
+
+  members      WorkspaceMember[]
+  invites      Invite[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+  goals        Goal[]
+  eventLogs    EventLog[]
+  pushSubscriptions PushSubscription[]
+}
+
+model WorkspaceMember {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          Role
+  displayColor  String?
+  joinedAt      DateTime  @default(now())
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+model Invite {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  code          String    @unique
+  createdById   String
+  createdBy     User      @relation("InviteCreator", fields: [createdById], references: [id])
+  role          Role      @default(MEMBER)
+  expiresAt     DateTime
+  usedAt        DateTime?
+  usedByUserId  String?
+  usedByUser    User?     @relation("InviteUser", fields: [usedByUserId], references: [id])
+
+  @@index([workspaceId])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  emoji       String
+  type        TxType
+  isArchived  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, type])
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  type        TxType
+  amount      Decimal   @db.Decimal(14, 2)
+  description String?
+  occurredAt  DateTime
+  source      TxSource  @default(MANUAL)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([workspaceId, occurredAt])
+  @@index([workspaceId, categoryId])
+  @@index([workspaceId, userId])
+}
+
+model Budget {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  monthlyLimit  Decimal   @db.Decimal(14, 2)
+  createdAt     DateTime  @default(now())
+
+  @@unique([workspaceId, categoryId])
+  @@index([workspaceId])
+}
+
+model Goal {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name         String
+  targetAmount Decimal   @db.Decimal(14, 2)
+  savedAmount  Decimal   @db.Decimal(14, 2) @default(0)
+  createdAt    DateTime  @default(now())
+
+  @@index([workspaceId])
+}
+
+model PushSubscription {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  endpoint    String    @unique
+  p256dh      String
+  auth        String
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([workspaceId])
+}
+
+model EventLog {
+  id          String     @id @default(cuid())
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  actorType   ActorType
+  action      String
+  metadata    Json?
+  level       LogLevel   @default(INFO)
+  createdAt   DateTime   @default(now())
+
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@index([level])
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+}
