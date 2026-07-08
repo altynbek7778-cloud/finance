@@ -44,3 +44,4 @@ npm run dev:admin      # http://localhost:5174 — админ-панель
 - Отдельная админ-панель со своей авторизацией: список пространств/пользователей, отключение/удаление аккаунтов, журнал событий
 - Rate-limiting, helmet, CORS allowlist, Zod-валидация всех запросов, workspace-scoped запросы везде (защита от IDOR)
 # finance
+# finance
