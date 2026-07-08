@@ -9,3 +9,4 @@ server/prisma/dev.db
 server/src/generated/
 .turbo/
 node_modules
+node_modules
