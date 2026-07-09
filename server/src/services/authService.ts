@@ -65,30 +65,40 @@ export async function loginUser(input: LoginInput, device: DeviceInfo) {
   return { user, ...tokens };
 }
 
+const REUSE_GRACE_MS = 10_000;
+
 export async function rotateRefreshToken(rawToken: string, device: DeviceInfo) {
   const hash = hashRefreshToken(rawToken);
-  const existing = await prisma.refreshToken.findUnique({ where: { tokenHash: hash } });
+  let record = await prisma.refreshToken.findUnique({ where: { tokenHash: hash } });
 
-  if (!existing) throw new HttpError(401, 'Invalid session');
+  if (!record) throw new HttpError(401, 'Invalid session');
 
-  if (existing.revokedAt) {
-    // Reuse of a revoked/rotated token is a theft signal: revoke the whole chain for this user.
-    await prisma.refreshToken.updateMany({
-      where: { userId: existing.userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-    throw new HttpError(401, 'Session invalidated, please log in again');
-  }
-
-  if (existing.expiresAt < new Date()) {
+  if (record.revokedAt) {
+    const withinGrace = Date.now() - record.revokedAt.getTime() < REUSE_GRACE_MS;
+    // A token reused just after being rotated is usually two tabs/devices refreshing at
+    // once, not theft — follow the chain to the live replacement instead of nuking the session.
+    if (!withinGrace || !record.replacedById) {
+      await prisma.refreshToken.updateMany({
+        where: { userId: record.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      throw new HttpError(401, 'Session invalidated, please log in again');
+    }
+    const replacement = await prisma.refreshToken.findUnique({ where: { id: record.replacedById } });
+    if (!replacement || replacement.revokedAt || replacement.expiresAt < new Date()) {
+      throw new HttpError(401, 'Session expired, please log in again');
+    }
+    record = replacement;
+  } else if (record.expiresAt < new Date()) {
     throw new HttpError(401, 'Session expired, please log in again');
   }
 
-  const user = await prisma.user.findUnique({ where: { id: existing.userId } });
+  const user = await prisma.user.findUnique({ where: { id: record.userId } });
   if (!user || user.isDisabled) throw new HttpError(401, 'Account not available');
 
   const { raw, hash: newHash } = generateRefreshToken();
-  const newToken = await prisma.$transaction(async (tx) => {
+  const activeRecord = record;
+  await prisma.$transaction(async (tx) => {
     const created = await tx.refreshToken.create({
       data: {
         userId: user.id,
@@ -99,10 +109,9 @@ export async function rotateRefreshToken(rawToken: string, device: DeviceInfo) {
       },
     });
     await tx.refreshToken.update({
-      where: { id: existing.id },
+      where: { id: activeRecord.id },
       data: { revokedAt: new Date(), replacedById: created.id },
     });
-    return created;
   });
 
   const accessToken = signAccessToken(user.id);

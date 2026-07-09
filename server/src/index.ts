@@ -1,7 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import authRoutes from './routes/auth.routes.js';
 import workspacesRoutes from './routes/workspaces.routes.js';
@@ -23,11 +22,9 @@ app.use(helmet());
 app.use(
   cors({
     origin: [env.WEB_ORIGIN, env.ADMIN_ORIGIN],
-    credentials: true,
   })
 );
 app.use(express.json());
-app.use(cookieParser());
 
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
 

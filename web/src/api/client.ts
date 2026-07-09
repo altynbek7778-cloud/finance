@@ -1,10 +1,24 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+const REFRESH_TOKEN_KEY = 'adel_refresh_token';
 
 let accessToken: string | null = null;
 let onSessionExpired: (() => void) | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
+}
+
+// The refresh token lives in localStorage (not an httpOnly cookie) because the API and the
+// PWA are on different domains — cross-site cookies get dropped unpredictably by mobile/PWA
+// browsers (Safari ITP in particular), which was logging users out on every fresh app launch
+// even though the token itself was still valid for 30 days.
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function setRefreshToken(token: string | null) {
+  if (token) localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  else localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
 export function setSessionExpiredHandler(handler: () => void) {
@@ -26,14 +40,24 @@ async function rawRequest(path: string, options: RequestInit = {}) {
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
 
-  return fetch(`${API_URL}${path}`, { ...options, headers, credentials: 'include' });
+  return fetch(`${API_URL}${path}`, { ...options, headers });
 }
 
 async function tryRefresh(): Promise<boolean> {
-  const res = await rawRequest('/auth/refresh', { method: 'POST' });
-  if (!res.ok) return false;
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+
+  const res = await rawRequest('/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken }),
+  });
+  if (!res.ok) {
+    setRefreshToken(null);
+    return false;
+  }
   const data = await res.json();
   setAccessToken(data.accessToken);
+  setRefreshToken(data.refreshToken);
   return true;
 }
 

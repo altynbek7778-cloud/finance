@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { UserDTO, WorkspaceSummaryDTO } from '@adel/shared';
-import { api, setAccessToken, setSessionExpiredHandler } from '../api/client';
+import { api, setAccessToken, setRefreshToken, getRefreshToken, setSessionExpiredHandler } from '../api/client';
 
 interface AuthContextValue {
   user: UserDTO | null;
@@ -34,8 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        const refreshed = await api.tryRefresh();
-        if (refreshed) await loadMe();
+        if (getRefreshToken()) {
+          const refreshed = await api.tryRefresh();
+          if (refreshed) await loadMe();
+        }
       } catch {
         // no valid session, stay logged out
       } finally {
@@ -46,8 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const data = await api.post<{ accessToken: string; user: UserDTO }>('/auth/login', { email, password });
+      const data = await api.post<{ accessToken: string; refreshToken: string; user: UserDTO }>('/auth/login', {
+        email,
+        password,
+      });
       setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
       setUser(data.user);
       await loadMe();
     },
@@ -56,12 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (email: string, password: string, name: string) => {
-      const data = await api.post<{ accessToken: string; user: UserDTO }>('/auth/register', {
+      const data = await api.post<{ accessToken: string; refreshToken: string; user: UserDTO }>('/auth/register', {
         email,
         password,
         name,
       });
       setAccessToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
       setUser(data.user);
       await loadMe();
     },
@@ -69,8 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await api.post('/auth/logout').catch(() => undefined);
+    const refreshToken = getRefreshToken();
+    if (refreshToken) await api.post('/auth/logout', { refreshToken }).catch(() => undefined);
     setAccessToken(null);
+    setRefreshToken(null);
     setUser(null);
     setWorkspaces([]);
   }, []);
