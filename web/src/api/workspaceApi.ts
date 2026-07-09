@@ -146,14 +146,3 @@ export function deleteGoal(workspaceId: string, goalId: string) {
 export function exportWorkspace(workspaceId: string) {
   return api.get<unknown>(`/workspaces/${workspaceId}/export`);
 }
-
-export interface AiParseResult {
-  type: TxType;
-  amount: number;
-  categoryId: string;
-  desc: string;
-}
-
-export function parseTransactionText(workspaceId: string, text: string) {
-  return api.post<AiParseResult>(`/workspaces/${workspaceId}/ai/parse-transaction`, { text });
-}

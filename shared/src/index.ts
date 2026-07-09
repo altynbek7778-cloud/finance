@@ -5,4 +5,3 @@ export * from './validation/category.js';
 export * from './validation/transaction.js';
 export * from './validation/budget.js';
 export * from './validation/push.js';
-export * from './validation/ai.js';

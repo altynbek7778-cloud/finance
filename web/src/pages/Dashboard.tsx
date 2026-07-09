@@ -46,7 +46,7 @@ export function Dashboard() {
   const load = useCallback(() => {
     if (!activeWorkspaceId) return;
     getAnalytics(activeWorkspaceId, 'month').then(setAnalytics);
-    listTransactions(activeWorkspaceId, { pageSize: 5 }).then((r) => setRecent(r.items));
+    listTransactions(activeWorkspaceId, { pageSize: 3 }).then((r) => setRecent(r.items));
     listBudgets(activeWorkspaceId).then(setBudgets);
     listGoals(activeWorkspaceId).then(setGoals);
   }, [activeWorkspaceId]);

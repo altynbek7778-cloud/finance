@@ -58,10 +58,10 @@ export function NotifyCard({ workspaceId }: { workspaceId: string }) {
             Узнавайте, когда партнёр добавляет операцию или превышен лимит бюджета.
           </div>
           <div className="notify-card-actions">
-            <button className="ai-ok" onClick={enable} disabled={loading}>
+            <button className="pill-btn-accent" onClick={enable} disabled={loading}>
               {loading ? 'Включаем…' : 'Включить'}
             </button>
-            <button className="ai-cancel" onClick={dismiss}>
+            <button className="pill-btn-ghost" onClick={dismiss}>
               Не сейчас
             </button>
           </div>
@@ -69,7 +69,7 @@ export function NotifyCard({ workspaceId }: { workspaceId: string }) {
       )}
       {iosNeedsInstall && (
         <div className="notify-card-actions">
-          <button className="ai-cancel" onClick={dismiss}>
+          <button className="pill-btn-ghost" onClick={dismiss}>
             Понятно
           </button>
         </div>

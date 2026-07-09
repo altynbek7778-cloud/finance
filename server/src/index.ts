@@ -9,7 +9,6 @@ import categoriesRoutes from './routes/categories.routes.js';
 import transactionsRoutes from './routes/transactions.routes.js';
 import budgetsRoutes from './routes/budgets.routes.js';
 import goalsRoutes from './routes/goals.routes.js';
-import aiRoutes from './routes/ai.routes.js';
 import pushRoutes from './routes/push.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
@@ -35,7 +34,6 @@ app.use('/workspaces/:workspaceId/categories', categoriesRoutes);
 app.use('/workspaces/:workspaceId/transactions', transactionsRoutes);
 app.use('/workspaces/:workspaceId/budgets', budgetsRoutes);
 app.use('/workspaces/:workspaceId/goals', goalsRoutes);
-app.use('/workspaces/:workspaceId/ai', aiRoutes);
 app.use('/push', pushRoutes);
 app.use('/admin', adminRoutes);
 

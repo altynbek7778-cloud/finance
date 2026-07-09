@@ -45,7 +45,6 @@ ckGmUBThhS4UtMZHYJ_UaC6hCi1QaY8-SyoQly0Rpok
 
 Также решите:
 - `ADMIN_SEED_USERNAME` / `ADMIN_SEED_PASSWORD` — логин и пароль, под которыми вы будете заходить в админ-панель.
-- `ANTHROPIC_API_KEY` — нужен только для ИИ-разбора трат. Получить можно на [console.anthropic.com](https://console.anthropic.com/) (раздел API Keys). Без него приложение работает нормально, просто вкладка «ИИ-ввод» будет выдавать ошибку — ручной ввод операций работает всегда.
 
 ## 3. Бэкенд — Render
 
@@ -65,7 +64,6 @@ ckGmUBThhS4UtMZHYJ_UaC6hCi1QaY8-SyoQly0Rpok
    ADMIN_JWT_SECRET=<другой сгенерированный>
    WEB_ORIGIN=<заполните после шага 5, временно можно http://localhost:5173>
    ADMIN_ORIGIN=<заполните после шага 5, временно можно http://localhost:5174>
-   ANTHROPIC_API_KEY=<ваш ключ Anthropic, если есть>
    VAPID_PUBLIC_KEY=<сгенерированный>
    VAPID_PRIVATE_KEY=<сгенерированный>
    VAPID_SUBJECT=mailto:ваш-email@пример.com
@@ -191,7 +189,7 @@ ADMIN_ORIGIN=https://adel-finance-admin.pages.dev
 ## 8. Финальная проверка
 
 1. Откройте `https://adel-finance.pages.dev` с телефона, зарегистрируйтесь, создайте пространство.
-2. Добавьте операцию (вручную и через ИИ-ввод, если подключили ключ Anthropic).
+2. Добавьте операцию через быстрый ввод (клавиатура сумм + выбор категории).
 3. На iPhone: Safari → «Поделиться» → «На экран Домой» — только после этого на iOS заработают push-уведомления (ограничение самой Apple, не хостинга). На Android push работают и без установки на экран.
 4. Пригласите жену: Настройки → Приглашения → скопировать ссылку, отправить ей — она откроет ссылку, зарегистрируется и присоединится к тому же пространству.
 5. Откройте `https://adel-finance-admin.pages.dev`, войдите под `ADMIN_SEED_USERNAME`/`ADMIN_SEED_PASSWORD` — там должно быть видно созданное пространство и обоих пользователей.

@@ -36,7 +36,7 @@ export function AppShell() {
           <span>Главная</span>
         </NavLink>
         <NavLink to="/add" className={({ isActive }) => `nav-btn${isActive ? ' active' : ''}`}>
-          <i className="ti ti-plus-circle" />
+          <i className="ti ti-circle-plus" />
           <span>Добавить</span>
         </NavLink>
         <NavLink to="/analytics" className={({ isActive }) => `nav-btn${isActive ? ' active' : ''}`}>

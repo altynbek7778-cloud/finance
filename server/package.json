@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@adel/shared": "*",
-    "@anthropic-ai/sdk": "^0.32.1",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^2.4.3",
